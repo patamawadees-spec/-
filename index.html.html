@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรับส่งข้อมูลข่าวสาร (News Submission)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Sarabun (Thai) -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+        .tab-active { border-bottom: 2px solid #2563eb; color: #1d4ed8; font-weight: 600; }
+        .tab-inactive { color: #6b7280; font-weight: 400; hover:text-gray-900; }
+        
+        /* Custom Scrollbar for textareas and containers */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xl">
+                    <i class="fa-solid fa-newspaper"></i>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800">NewsPortal</h1>
+            </div>
+            
+            <!-- Tabs -->
+            <nav class="flex space-x-2 md:space-x-8 overflow-x-auto pb-1">
+                <button id="tab-submit" class="tab-active whitespace-nowrap px-1 py-4 text-sm md:text-base focus:outline-none transition-colors">
+                    <i class="fa-solid fa-paper-plane mr-1 md:mr-2"></i>ส่งข้อมูลข่าวสาร / จดหมายข่าว
+                </button>
+                <button id="tab-admin" class="tab-inactive whitespace-nowrap px-1 py-4 text-sm md:text-base focus:outline-none transition-colors">
+                    <i class="fa-solid fa-user-shield mr-1 md:mr-2"></i>สำหรับแอดมิน
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- View 1: Unified Submit Form -->
+        <div id="view-submit" class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in block">
+            <div id="form-header-bg" class="bg-blue-600 p-6 text-white text-center transition-colors duration-300">
+                <h2 id="form-header-title" class="text-2xl font-bold mb-1">ส่งข้อมูลข่าวสาร & จดหมายข่าว</h2>
+                <p id="form-header-subtitle" class="text-blue-100 text-sm">กรอกข้อมูล จดหมายข่าว และแนบรูปภาพประกอบได้ในหน้าเดียว</p>
+            </div>
+            
+            <form id="news-form" class="p-6 md:p-8 space-y-5">
+
+                <!-- Title -->
+                <div>
+                    <label id="label-title" for="news-title" class="block text-sm font-semibold text-gray-700 mb-1">หัวข้อข่าว / หัวข้อจดหมายข่าว <span class="text-red-500">*</span></label>
+                    <input type="text" id="news-title" required placeholder="พิมพ์หัวข้อข่าวหรือจดหมายข่าวที่นี่..." 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow">
+                </div>
+                
+                <!-- Content -->
+                <div id="content-container">
+                    <label id="label-content" for="news-content" class="block text-sm font-semibold text-gray-700 mb-1">เนื้อหาข่าว / รายละเอียด <span class="text-red-500">*</span></label>
+                    <textarea id="news-content" required rows="4" placeholder="พิมพ์รายละเอียดข่าวหรือหมายเหตุ..."
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow resize-none"></textarea>
+                </div>
+                
+                <!-- Sender Name -->
+                <div>
+                    <label id="label-sender" for="news-sender" class="block text-sm font-semibold text-gray-700 mb-1">ชื่อผู้แจ้ง / แหล่งที่มา / หน่วยงาน <span class="text-red-500">*</span></label>
+                    <input type="text" id="news-sender" required placeholder="ชื่อ นามสกุล หรือ นามแฝง/หน่วยงาน" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow">
+                </div>
+
+                <!-- 1. PR Newsletter / Poster Upload (อยู่ล่างชื่อผู้แจ้ง) -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        <i class="fa-solid fa-file-image text-purple-600 mr-1"></i>รูปภาพจดหมายข่าวประชาสัมพันธ์ / โปสเตอร์ <span class="text-gray-400 font-normal">(ถ้ามี)</span>
+                    </label>
+                    <div class="mt-1 border-2 border-purple-200 border-dashed rounded-lg p-4 bg-purple-50/50 hover:border-purple-400 transition-colors">
+                        <div id="pr-upload-prompt" class="text-center">
+                            <label for="pr-image" class="cursor-pointer bg-purple-600 text-white hover:bg-purple-700 font-medium px-4 py-2 rounded-lg inline-flex items-center gap-2 shadow-sm transition-colors text-sm">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>เลือกรูปภาพจดหมายข่าว</span>
+                                <input id="pr-image" type="file" class="sr-only" accept="image/*">
+                            </label>
+                            <p class="text-xs text-gray-500 mt-2">รองรับไฟล์ PNG, JPG (1 รูป)</p>
+                        </div>
+                        <div id="pr-preview-container" class="hidden flex flex-col items-center">
+                            <img id="pr-preview" src="" alt="PR Newsletter Preview" class="max-h-48 rounded-lg object-contain border shadow-sm mb-2">
+                            <button type="button" id="remove-pr-btn" class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-trash-can"></i> ลบรูปจดหมายข่าว
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2. Attachment Photos Upload (อยู่ล่างจดหมายข่าว - ไม่เกิน 30 รูป) -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            <i class="fa-solid fa-images text-blue-600 mr-1"></i>รูปภาพประกอบข่าวสาร <span class="text-gray-400 font-normal">(เลือกพร้อมกันได้สูงสุด 30 รูป)</span>
+                        </label>
+                        <span id="gallery-counter" class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">0 / 30 รูป</span>
+                    </div>
+                    <div class="mt-1 border-2 border-gray-300 border-dashed rounded-lg p-4 bg-gray-50 hover:border-blue-500 transition-colors">
+                        <div class="text-center">
+                            <label for="gallery-images" class="cursor-pointer bg-blue-600 text-white hover:bg-blue-700 font-medium px-4 py-2 rounded-lg inline-flex items-center gap-2 shadow-sm transition-colors text-sm">
+                                <i class="fa-solid fa-images"></i>
+                                <span>เลือกรูปภาพประกอบ (เลือกได้หลายรูป)</span>
+                                <input id="gallery-images" type="file" class="sr-only" accept="image/*" multiple>
+                            </label>
+                            <p class="text-xs text-gray-500 mt-2">เลือกพร้อมกันได้หลายรูประบบจะบีบอัดภาพให้อัตโนมัติ (รวมสูงสุด 30 รูป)</p>
+                        </div>
+
+                        <!-- Gallery Preview Grid -->
+                        <div id="gallery-preview-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-4 hidden">
+                            <!-- Thumbnails injected by JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button type="submit" id="btn-submit" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> ส่งข้อมูลข่าวสาร & จดหมายข่าว
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- View 2: Admin Dashboard -->
+        <div id="view-admin" class="hidden">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">จัดการข้อมูลข่าวสาร</h2>
+                    <p class="text-gray-500 text-sm">รายการข้อมูลทั้งหมดที่ได้รับจากผู้ใช้งาน</p>
+                </div>
+                
+                <!-- Export Actions -->
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button id="btn-export-csv" class="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center justify-center">
+                        <i class="fa-solid fa-file-csv mr-2"></i> ออกรายงาน CSV
+                    </button>
+                    <button id="btn-export-json" class="flex-1 md:flex-none bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center justify-center">
+                        <i class="fa-solid fa-file-code mr-2"></i> โหลด JSON
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Indicator for Admin Data -->
+            <div id="admin-loading" class="py-12 text-center text-gray-500">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-blue-500"></i>
+                <p>กำลังโหลดข้อมูล...</p>
+            </div>
+
+            <!-- Data List -->
+            <div id="news-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+                <!-- Cards will be injected here via JS -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="admin-empty" class="hidden bg-white rounded-2xl shadow-sm p-12 text-center">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400 text-3xl">
+                    <i class="fa-solid fa-inbox"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-700">ยังไม่มีข้อมูลข่าวสาร</h3>
+                <p class="text-gray-500 mt-1">ข้อมูลที่ถูกส่งเข้ามาจะแสดงที่นี่</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast Notification (Custom alert) -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- Image Modal for viewing full size image -->
+    <div id="image-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="relative max-w-5xl w-full h-full flex flex-col items-center justify-center">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-white hover:text-gray-300 bg-gray-800/80 rounded-full w-10 h-10 flex items-center justify-center focus:outline-none z-10">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <button id="modal-prev-btn" class="absolute left-2 text-white bg-gray-800/80 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center hidden z-10">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button id="modal-next-btn" class="absolute right-2 text-white bg-gray-800/80 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center hidden z-10">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <img id="modal-image" src="" class="max-h-[80vh] max-w-full rounded shadow-2xl object-contain">
+            <div id="modal-caption" class="text-white text-sm mt-3 bg-gray-900/80 px-4 py-1 rounded-full"></div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // 1. Firebase Initialization & Setup
+        // ==========================================
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-news-app-123';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            projectId: "demo-project"
+        };
+        
+        let app, db, auth, user;
+        let newsDataCache = []; // Store fetched data for exporting
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            authenticateUser();
+        } catch (error) {
+            console.error("Firebase init error:", error);
+            showToast("ไม่สามารถเชื่อมต่อฐานข้อมูลได้", "error");
+        }
+
+        async function authenticateUser() {
+            try {
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (token) {
+                    await signInWithCustomToken(auth, token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                user = auth.currentUser;
+                setupRealtimeListener();
+            } catch (error) {
+                console.error("Auth error:", error);
+                showToast("เกิดข้อผิดพลาดในการยืนยันตัวตน", "error");
+            }
+        }
+
+        const getCollectionRef = () => collection(db, 'artifacts', appId, 'public', 'data', 'news_submissions');
+
+        // ==========================================
+        // 2. UI Variables & Navigation Logic
+        // ==========================================
+        const tabSubmit = document.getElementById('tab-submit');
+        const tabAdmin = document.getElementById('tab-admin');
+        const viewSubmit = document.getElementById('view-submit');
+        const viewAdmin = document.getElementById('view-admin');
+        
+        const newsForm = document.getElementById('news-form');
+        const btnSubmit = document.getElementById('btn-submit');
+        
+        // PR Newsletter Elements
+        const prInput = document.getElementById('pr-image');
+        const prPrompt = document.getElementById('pr-upload-prompt');
+        const prPreviewContainer = document.getElementById('pr-preview-container');
+        const prPreview = document.getElementById('pr-preview');
+        const removePrBtn = document.getElementById('remove-pr-btn');
+        let processedPrImage = null; // Single PR image base64
+
+        // Gallery Photos Elements (Up to 30 photos)
+        const galleryInput = document.getElementById('gallery-images');
+        const galleryGrid = document.getElementById('gallery-preview-grid');
+        const galleryCounter = document.getElementById('gallery-counter');
+        let galleryImagesList = []; // Array of Base64 strings (max 30)
+
+        const MAX_GALLERY_PHOTOS = 30;
+
+        // Tab Switching
+        tabSubmit.addEventListener('click', () => switchTab('submit'));
+        tabAdmin.addEventListener('click', () => switchTab('admin'));
+
+        function switchTab(tab) {
+            tabSubmit.className = "tab-inactive whitespace-nowrap px-1 py-4 text-sm md:text-base focus:outline-none transition-colors";
+            tabAdmin.className = "tab-inactive whitespace-nowrap px-1 py-4 text-sm md:text-base focus:outline-none transition-colors";
+            
+            viewSubmit.classList.add('hidden');
+            viewAdmin.classList.add('hidden');
+
+            if (tab === 'submit') {
+                tabSubmit.className = "tab-active whitespace-nowrap px-1 py-4 text-sm md:text-base focus:outline-none transition-colors";
+                viewSubmit.classList.remove('hidden');
+            } else {
+                tabAdmin.className = "tab-active whitespace-nowrap px-1 py-4 text-sm md:text-base focus:outline-none transition-colors !border-gray-800 !text-gray-900";
+                viewAdmin.classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // 3. Image Compression & Processing
+        // ==========================================
+        // PR Image Upload Handler
+        prInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showToast("กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น", "error");
+                prInput.value = '';
+                return;
+            }
+
+            compressImage(file, 1000, 1200, 0.75, (base64) => {
+                processedPrImage = base64;
+                prPreview.src = base64;
+                prPrompt.classList.add('hidden');
+                prPreviewContainer.classList.remove('hidden');
+            });
+        });
+
+        removePrBtn.addEventListener('click', () => {
+            prInput.value = '';
+            processedPrImage = null;
+            prPreview.src = '';
+            prPrompt.classList.remove('hidden');
+            prPreviewContainer.classList.add('hidden');
+        });
+
+        // Gallery Images Upload Handler (Supports uploading multiple photos, max 30)
+        galleryInput.addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if (!files || files.length === 0) return;
+
+            const remainingSlots = MAX_GALLERY_PHOTOS - galleryImagesList.length;
+            if (remainingSlots <= 0) {
+                showToast(`คุณแนบรูปภาพครบโควตา ${MAX_GALLERY_PHOTOS} รูปแล้ว`, "error");
+                galleryInput.value = '';
+                return;
+            }
+
+            if (files.length > remainingSlots) {
+                showToast(`สามารถเพิ่มรูปภาพได้อีกเพียง ${remainingSlots} รูปเท่านั้น`, "info");
+            }
+
+            const filesToProcess = files.slice(0, remainingSlots);
+            
+            showToast(`กำลังประมวลผลรูปภาพ ${filesToProcess.length} รูป...`, "info");
+
+            for (const file of filesToProcess) {
+                if (!file.type.startsWith('image/')) continue;
+                
+                await new Promise((resolve) => {
+                    // Compress images to ~800px max width/height to ensure 30 photos fit comfortably within Firestore limit
+                    compressImage(file, 800, 800, 0.65, (base64) => {
+                        if (galleryImagesList.length < MAX_GALLERY_PHOTOS) {
+                            galleryImagesList.push(base64);
+                        }
+                        resolve();
+                    });
+                });
+            }
+
+            galleryInput.value = ''; // Reset input to allow adding more
+            renderGalleryPreviews();
+        });
+
+        function renderGalleryPreviews() {
+            galleryGrid.innerHTML = '';
+            galleryCounter.textContent = `${galleryImagesList.length} / ${MAX_GALLERY_PHOTOS} รูป`;
+
+            if (galleryImagesList.length === 0) {
+                galleryGrid.classList.add('hidden');
+                return;
+            }
+
+            galleryGrid.classList.remove('hidden');
+
+            galleryImagesList.forEach((base64Img, index) => {
+                const thumbWrapper = document.createElement('div');
+                thumbWrapper.className = "relative group rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square";
+
+                thumbWrapper.innerHTML = `
+                    <img src="${base64Img}" class="w-full h-full object-cover">
+                    <button type="button" data-index="${index}" class="remove-gallery-img-btn absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-90 hover:opacity-100 transition-opacity shadow">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <span class="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">${index + 1}</span>
+                `;
+
+                galleryGrid.appendChild(thumbWrapper);
+            });
+
+            // Attach event listeners for individual removal
+            document.querySelectorAll('.remove-gallery-img-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+                    galleryImagesList.splice(idx, 1);
+                    renderGalleryPreviews();
+                });
+            });
+        }
+
+        // Image compression helper function
+        function compressImage(file, maxWidth, maxHeight, quality, callback) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                    callback(compressedBase64);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ==========================================
+        // 4. Submit Data Logic
+        // ==========================================
+        newsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!user) {
+                showToast("ยังไม่ได้เชื่อมต่อระบบ กรุณารอสักครู่", "error");
+                return;
+            }
+
+            const title = document.getElementById('news-title').value.trim();
+            const content = document.getElementById('news-content').value.trim();
+            const sender = document.getElementById('news-sender').value.trim();
+
+            if (!title || !content || !sender) {
+                showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "error");
+                return;
+            }
+
+            // Loading state
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังส่งข้อมูล...';
+
+            try {
+                const payload = {
+                    title: title,
+                    content: content,
+                    sender: sender,
+                    prImage: processedPrImage || null,
+                    galleryImages: galleryImagesList || [], // Array of up to 30 base64 images
+                    timestamp: new Date().toISOString(),
+                    serverTime: serverTimestamp()
+                };
+
+                await addDoc(getCollectionRef(), payload);
+                
+                showToast("ส่งข้อมูลข่าวสารและรูปภาพสำเร็จ!", "success");
+                newsForm.reset();
+                removePrBtn.click(); // Reset PR image
+                galleryImagesList = []; // Reset Gallery photos
+                renderGalleryPreviews();
+                
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                showToast("เกิดข้อผิดพลาดในการส่งข้อมูล", "error");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> ส่งข้อมูลข่าวสาร & จดหมายข่าว';
+            }
+        });
+
+        // ==========================================
+        // 5. Admin Dashboard & Realtime Sync
+        // ==========================================
+        const newsListEl = document.getElementById('news-list');
+        const loadingEl = document.getElementById('admin-loading');
+        const emptyEl = document.getElementById('admin-empty');
+
+        function setupRealtimeListener() {
+            if (!user) return;
+
+            onSnapshot(getCollectionRef(), (snapshot) => {
+                loadingEl.classList.add('hidden');
+                
+                newsDataCache = [];
+                snapshot.forEach((docSnap) => {
+                    newsDataCache.push({
+                        id: docSnap.id,
+                        ...docSnap.data()
+                    });
+                });
+
+                // Sort by timestamp descending (newest first)
+                newsDataCache.sort((a, b) => {
+                    const timeA = new Date(a.timestamp).getTime() || 0;
+                    const timeB = new Date(b.timestamp).getTime() || 0;
+                    return timeB - timeA; 
+                });
+
+                renderNewsList(newsDataCache);
+
+            }, (error) => {
+                console.error("Snapshot error:", error);
+                loadingEl.innerHTML = `<p class="text-red-500">เกิดข้อผิดพลาดในการดึงข้อมูล</p>`;
+            });
+        }
+
+        function renderNewsList(data) {
+            newsListEl.innerHTML = '';
+
+            if (data.length === 0) {
+                newsListEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            newsListEl.classList.remove('hidden');
+            emptyEl.classList.add('hidden');
+
+            data.forEach((item) => {
+                const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH') : 'ไม่ระบุเวลา';
+                const hasPrImage = !!item.prImage;
+                const gallery = item.galleryImages || (item.image ? [item.image] : []); // Backward compatibility
+                const hasGallery = gallery.length > 0;
+                
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow relative group";
+                
+                // PR Newsletter Header Badge/Image if available
+                let prHeaderHtml = '';
+                if (hasPrImage) {
+                    prHeaderHtml = `
+                        <div class="h-44 w-full bg-purple-50 relative cursor-pointer pr-img-trigger border-b" data-img="${item.prImage}">
+                            <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10"><i class="fa-solid fa-file-image mr-1"></i>จดหมายข่าว</span>
+                            <img src="${item.prImage}" alt="จดหมายข่าว" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                                <i class="fa-solid fa-magnifying-glass-plus text-white text-2xl"></i>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Gallery Grid Preview
+                let galleryHtml = '';
+                if (hasGallery) {
+                    const firstFew = gallery.slice(0, 4);
+                    const remainingCount = gallery.length - 4;
+
+                    galleryHtml = `
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                            <div class="text-xs font-semibold text-gray-500 mb-2 flex items-center justify-between">
+                                <span><i class="fa-solid fa-images text-blue-500 mr-1"></i>รูปภาพประกอบ (${gallery.length} รูป)</span>
+                            </div>
+                            <div class="grid grid-cols-4 gap-1.5">
+                                ${firstFew.map((img, idx) => `
+                                    <div class="relative aspect-square rounded overflow-hidden bg-gray-100 cursor-pointer gallery-item-trigger" data-card-id="${item.id}" data-img-idx="${idx}">
+                                        <img src="${img}" class="w-full h-full object-cover">
+                                        ${(idx === 3 && remainingCount > 0) ? `
+                                            <div class="absolute inset-0 bg-black/60 text-white flex items-center justify-center font-bold text-xs">+${remainingCount}</div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    ${prHeaderHtml}
+                    <div class="p-5 flex-1 flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-bold text-gray-800 line-clamp-2 leading-tight">${escapeHTML(item.title)}</h3>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-2 line-clamp-3 flex-1 whitespace-pre-line">${escapeHTML(item.content)}</p>
+                        
+                        ${galleryHtml}
+
+                        <div class="pt-3 border-t border-gray-100 mt-4 space-y-1">
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="fa-solid fa-user-pen w-4"></i>
+                                <span class="truncate">${escapeHTML(item.sender)}</span>
+                            </div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="fa-regular fa-calendar w-4"></i>
+                                <span>${dateStr}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Delete Button -->
+                    <button class="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full text-red-500 shadow hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 delete-btn z-30" data-id="${item.id}" title="ลบข้อมูล">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+
+                newsListEl.appendChild(card);
+            });
+
+            // Event Listeners for dynamic elements
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const id = e.currentTarget.getAttribute('data-id');
+                    await deleteNews(id);
+                });
+            });
+
+            document.querySelectorAll('.pr-img-trigger').forEach(trigger => {
+                trigger.addEventListener('click', (e) => {
+                    const src = e.currentTarget.getAttribute('data-img');
+                    openImageModal([src], 0, "รูปภาพจดหมายข่าวประชาสัมพันธ์");
+                });
+            });
+
+            document.querySelectorAll('.gallery-item-trigger').forEach(trigger => {
+                trigger.addEventListener('click', (e) => {
+                    const cardId = e.currentTarget.getAttribute('data-card-id');
+                    const imgIdx = parseInt(e.currentTarget.getAttribute('data-img-idx'));
+                    const newsItem = newsDataCache.find(n => n.id === cardId);
+                    
+                    if (newsItem) {
+                        const gallery = newsItem.galleryImages || (newsItem.image ? [newsItem.image] : []);
+                        openImageModal(gallery, imgIdx, `รูปภาพประกอบข่าว: ${newsItem.title}`);
+                    }
+                });
+            });
+        }
+
+        async function deleteNews(id) {
+            if(!user) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'news_submissions', id));
+                showToast("ลบข้อมูลสำเร็จ", "success");
+            } catch (error) {
+                console.error("Delete error", error);
+                showToast("ไม่สามารถลบข้อมูลได้", "error");
+            }
+        }
+
+        // ==========================================
+        // 6. Export Features (CSV & JSON)
+        // ==========================================
+        document.getElementById('btn-export-json').addEventListener('click', () => {
+            if (newsDataCache.length === 0) {
+                showToast("ไม่มีข้อมูลให้ส่งออก", "error");
+                return;
+            }
+            const dataStr = JSON.stringify(newsDataCache, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            triggerDownload(dataUri, `news_data_${new Date().getTime()}.json`);
+            showToast("ส่งออกไฟล์ JSON สำเร็จ", "success");
+        });
+
+        document.getElementById('btn-export-csv').addEventListener('click', () => {
+            if (newsDataCache.length === 0) {
+                showToast("ไม่มีข้อมูลให้ส่งออก", "error");
+                return;
+            }
+
+            const headers = ["วันที่ (Timestamp)", "หัวข้อ (Title)", "เนื้อหา (Content)", "ผู้ส่ง/หน่วยงาน (Sender)", "รูปจดหมายข่าว (PR Image)", "จำนวนรูปประกอบ (Gallery Count)"];
+            let csvContent = "\uFEFF" + headers.join(",") + "\n";
+
+            newsDataCache.forEach(item => {
+                const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH') : '';
+                const safeTitle = (item.title || '').replace(/"/g, '""');
+                const safeContent = (item.content || '').replace(/"/g, '""');
+                const safeSender = (item.sender || '').replace(/"/g, '""');
+                const hasPrTxt = item.prImage ? "มีรูปจดหมายข่าว" : "ไม่มี";
+                const galleryCount = (item.galleryImages ? item.galleryImages.length : (item.image ? 1 : 0));
+
+                const row = [
+                    `"${dateStr}"`,
+                    `"${safeTitle}"`,
+                    `"${safeContent}"`,
+                    `"${safeSender}"`,
+                    `"${hasPrTxt}"`,
+                    `"${galleryCount}"`
+                ];
+                
+                csvContent += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const dataUri = URL.createObjectURL(blob);
+            triggerDownload(dataUri, `news_report_${new Date().getTime()}.csv`);
+            showToast("ส่งออกไฟล์ CSV สำเร็จ", "success");
+        });
+
+        function triggerDownload(uri, filename) {
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', uri);
+            linkElement.setAttribute('download', filename);
+            document.body.appendChild(linkElement);
+            linkElement.click();
+            document.body.removeChild(linkElement);
+        }
+
+        // ==========================================
+        // 7. Helper Utilities & Multi-image Modal
+        // ==========================================
+        function escapeHTML(str) {
+            return str ? str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
+            ) : '';
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = "bg-gray-800";
+            let icon = "fa-info-circle";
+            
+            if (type === 'success') { bgClass = "bg-green-600"; icon = "fa-check-circle"; }
+            if (type === 'error') { bgClass = "bg-red-600"; icon = "fa-triangle-exclamation"; }
+
+            toast.className = `${bgClass} text-white px-4 py-3 rounded shadow-lg flex items-center gap-3 transform translate-y-10 opacity-0 transition-all duration-300 z-50`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHTML(message)}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.remove('translate-y-10', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-10');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Image Modal Gallery Viewer Logic
+        const modal = document.getElementById('image-modal');
+        const modalImg = document.getElementById('modal-image');
+        const modalCaption = document.getElementById('modal-caption');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const modalPrevBtn = document.getElementById('modal-prev-btn');
+        const modalNextBtn = document.getElementById('modal-next-btn');
+
+        let currentModalImages = [];
+        let currentModalIndex = 0;
+
+        function openImageModal(imagesArray, startIndex = 0, captionText = "") {
+            if (!imagesArray || imagesArray.length === 0) return;
+            
+            currentModalImages = imagesArray;
+            currentModalIndex = startIndex;
+            
+            updateModalView(captionText);
+
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            modal.classList.add('opacity-100');
+        }
+
+        function updateModalView(captionText = "") {
+            modalImg.src = currentModalImages[currentModalIndex];
+            modalCaption.textContent = `${captionText ? captionText + ' ' : ''}(${currentModalIndex + 1} / ${currentModalImages.length})`;
+
+            if (currentModalImages.length > 1) {
+                modalPrevBtn.classList.remove('hidden');
+                modalNextBtn.classList.remove('hidden');
+            } else {
+                modalPrevBtn.classList.add('hidden');
+                modalNextBtn.classList.add('hidden');
+            }
+        }
+
+        modalPrevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentModalIndex = (currentModalIndex - 1 + currentModalImages.length) % currentModalImages.length;
+            updateModalView();
+        });
+
+        modalNextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentModalIndex = (currentModalIndex + 1) % currentModalImages.length;
+            updateModalView();
+        });
+
+        function closeImageModal() {
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modalImg.src = '';
+            }, 300);
+        }
+
+        closeModalBtn.addEventListener('click', closeImageModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeImageModal();
+        });
+
+    </script>
+</body>
+</html>
